@@ -3,7 +3,7 @@ name: prd-generator
 description: "Generate production-ready Product Requirement Documents (PRD) for Claude Code development. Use this skill whenever the user wants to create a product requirements document, development specification, PRD, technical specification, or system design document — especially when the deliverable is intended to be executed by Claude Code or AI-assisted development tools. Also trigger when the user says things like 'help me plan a new product', 'I need a development document for...', 'write a PRD', 'create a spec for Claude Code', '帮我写产品需求文档', '生成开发文档', '我要做一个系统', or any variation requesting structured product planning for software development. This skill is particularly powerful for users who are not professional developers but want to build real production systems with AI assistance."
 ---
 
-# PRD Generator v4.0 — Claude Code 生产级开发规范文档生成器
+# PRD Generator v4.2 — Claude Code 生产级开发规范文档生成器
 
 ## Overview
 
@@ -26,8 +26,12 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
 9. **架构韧性优先**：系统设计必须识别单点故障、定义故障影响范围、设计自动恢复和优雅降级方案。不能只考虑"正常跑起来"，必须考虑"挂了怎么办"。
 10. **第三方依赖是风险源**：每个外部服务（支付、认证、AI API、短信、云存储）都是潜在的故障点。必须盘点配额上限、风控规则、冷启动限制、扩容时间，不能假设"第三方永远可用"。
 11. **兜底机制必须分层**：技术降级→人工应急→用户沟通，三层兜底缺一不可。最后一道防线是人，不是代码。
+12. **运营者视角（v4.2）**：系统不只要"能跑"，还要让管理员/老师每天的琐事（加一个人、解锁、转班、重置密码、找出没做完的人）都有界面入口。凡是"只能找技术改数据库"的日常操作都是漏洞。
+13. **结果质量视角（v4.2）**：涉及AI/推荐/匹配时，必须定义"什么样的结果算合格"，并检查数据覆盖度——AI推荐不出库里没有的东西；兜底降级必须可见，不能静默。
+14. **审美视角（v4.2）**：视觉方向必须用参考网站对齐、出多版让用户挑，再写成设计规范。"功能都对但不好看"同样是失败。
+15. **真实用户会不认真用（v4.2）**：被要求使用的用户会乱点、敷衍。凡是用户输入会被拿去分析的系统，都要设计温和防护和质量标记。
 
-## Workflow: 六阶段生成流程
+## Workflow: 七阶段生成流程
 
 ### 阶段一：需求探查（Requirement Discovery）
 
@@ -75,6 +79,21 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
 21. 涉及哪些第三方服务？（支付/认证/短信/AI/云存储/地图等）
 22. 这些服务的账号是新开的还是已有交易记录？（冷启动风险）
 23. 是否了解各服务的配额/限额/费用模型？
+
+**用户网络来源（v4.2 新增）**：
+24. 用户主要从哪里访问？学校/公司WiFi、机房、手机流量、家庭宽带？**有没有几百人在同一个地方同时用？**（共用出口IP会让所有"按IP限流"的规则误伤整批用户，见 `references/load-testing.md`）
+
+**运营场景（v4.2 新增）**：
+25. 每个管理角色"真实的一天/一学期"是怎样的？开学第一天账号怎么发？有人登不上谁来处理？（见 `references/operations-scenarios.md`）
+26. 数据导入后，单个新增/修改/停用/重新启用/转移归属怎么做？
+
+**结果质量与数据用途（v4.2 新增）**：
+27. 如果有AI推荐/生成：什么样的结果算"好"？能不能给几个例子？用户分几类、每类需要多少条可推荐的数据、数据从哪来？（见 `references/ai-quality-and-data-coverage.md`）
+28. 这些数据最后要拿去回答什么问题？（课题研究/运营决策/考核）——从问题反推要采集的字段（见 `references/data-quality-and-research.md`）
+29. 用户是自愿使用还是被要求使用？会不会乱填、敷衍？
+
+**视觉方向（v4.2 新增）**：
+30. 给3–5个你觉得好看的网站/App，分别喜欢哪一点？有没有不喜欢的风格？希望用户第一眼的感受是哪三个词？（见 `references/visual-design.md`）
 
 **关键原则**：
 - 用户说不清楚时，给出推荐方案（附理由），不给一堆选项让用户纠结
@@ -143,6 +162,8 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
      - 测试数据清理按FK逆序，conftest.py清理fixture先于第一个测试设计
      - 测试环境独立（独立数据库+独立Redis db），禁止复用开发环境
      - Docker服务间用服务名连接，禁止localhost
+     - 任何前端/UI工作先读 DESIGN.md，偏离设计规范前先问用户（v4.2）
+     - 用户正在使用期间不部署；部署后必须跑线上冒烟（v4.2）
 
 **写作原则**：
 - 数据模型必须有完整SQL DDL
@@ -186,6 +207,16 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
    - 如果整个系统完全不可用，用户怎么知道情况？谁来告诉他们？
    - 系统恢复后，之前未完成的操作怎么处理？
 
+5. **运营场景流程（v4.2新增）**：
+   - 来了一个插班生/新员工，管理员怎么加？导入表格里班级名写法不统一会怎样？
+   - 学生忘了密码/被锁定，老师自己能处理吗？
+   - 老师想知道"谁还没做完"，在哪里看？能筛选、能搜索吗？
+   - 老师离职/学生转班后，数据和权限怎么变？
+
+6. **用户不认真用（v4.2新增）**：
+   - 用户一路连点同一选项、秒答、对话只回"嗯"，系统会怎样？分析数据里能识别出来吗？
+   - AI 拿不到好结果时降级了，用户、管理员、研究者能看出来吗？
+
 如果用户说"不对，这里应该是..."，立即修正PRD。
 
 ### 阶段五：扫雷审查（Gap Analysis）
@@ -215,9 +246,19 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
 - 快速回滚触发条件
 - 人工应急预案
 
+### 阶段七：试点与迭代（Pilot & Iterate）— v4.2新增
+
+**目标**：PRD 不是一次性文档。真实用户会暴露大量需求探查时想不到的问题，必须预先规划"小范围试点 → 数据分析 → 迭代 → PRD 更新"的闭环。
+
+PRD 中写明：
+- **试点计划**：先给谁用（一个班/一个部门，20–100人）、用多久、成功标准是什么
+- **试点后分析什么**：完成率漏斗、卡在哪一步、AI结果合格率、用户评价、敷衍比例、慢接口
+- **反馈收集**：用户和管理员通过什么渠道反馈；管理员能否直接导出分析数据
+- **PRD 版本更新**：每轮试点后把新发现的场景、规则、指标写回 PRD（v1.1、v1.2……），附变更记录。新会话/新开发者以最新版为准
+
 ## Output Quality Standards
 
-生成的PRD必须满足以下19项标准：
+生成的PRD必须满足以下24项标准：
 
 1. **Claude Code可执行性**：一个不了解背景的Claude Code实例，仅凭此文档能独立完成开发
 2. **数据模型完整性**：DDL完整、外键清晰、索引定义、JSONB结构有示例
@@ -238,6 +279,11 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
 17. **第三方风险可控**：所有外部服务的配额/风控/冷启动限制已盘点
 18. **日志可排查**：结构化日志规范、链路追踪、敏感信息脱敏均已定义
 19. **开发陷阱已预防**：类型统一规约、框架兼容性验证、FK级联策略、测试隔离方案、本地/生产差异对照均已定义
+20. **运营场景完整（v4.2）**：每类人管理的数据都有完整生命周期表（新建/批量/搜索/筛选/编辑/停用/启用/删除/重置/解锁/导出/转移）
+21. **网络现实已考虑（v4.2）**：用户网络来源已问清，按IP的限流/封禁按共用出口最坏情况设计；压测方法能排除压测机网络干扰
+22. **结果质量可检验（v4.2）**：AI输出有合格标准和评测样例集；数据覆盖度矩阵已列出；降级来源可追踪
+23. **数据可分析（v4.2）**：从研究/运营问题反推的字段已定义；用户输入质量有防护和标记
+24. **视觉方向已对齐（v4.2）**：有用户确认的参考与设计规范（DESIGN.md），管理后台也有设计，电脑与手机分别验收
 
 ## Reference Files
 
@@ -250,6 +296,11 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
 | `references/resilience-design.md` | 容灾/韧性/兜底设计标准模板 | 阶段三 |
 | `references/gap-analysis-checklist.md` | 扫雷检查清单 | 阶段五 |
 | `references/go-live-checklist.md` | 上线准备检查清单 | 阶段六 |
+| `references/operations-scenarios.md` | 运营场景与数据生命周期清单（v4.2） | 阶段一、三、四 |
+| `references/ai-quality-and-data-coverage.md` | AI输出质量与数据覆盖标准（v4.2） | 阶段一、三（涉及AI时） |
+| `references/data-quality-and-research.md` | 用户输入质量与研究/运营指标设计（v4.2） | 阶段一、三 |
+| `references/visual-design.md` | 视觉设计确认流程（v4.2） | 阶段一、二 |
+| `references/load-testing.md` | 压力测试方法与网络来源（v4.2） | 阶段一、三、六 |
 
 ## Language & Style
 
@@ -258,3 +309,4 @@ description: "Generate production-ready Product Requirement Documents (PRD) for 
 - 非技术用户：用比喻解释概念，不堆砌术语
 - 技术选型：主动推荐+解释理由，不给一堆选项
 - **并发量：不相信用户的直觉，必须用公式帮他算**
+- **视觉：不替用户决定风格，先要参考、再出多版让他挑**
